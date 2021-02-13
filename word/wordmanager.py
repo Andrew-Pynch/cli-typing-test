@@ -1,7 +1,6 @@
 import os
 import random
 import sys
-import getch
 
 
 class WordManager:
@@ -17,15 +16,19 @@ class WordManager:
         self.incorrect_words = 0
         self.word_accuracy = 0
         self.char_accuracy = 0
+        self.words_seen = 0
         self.wpm = 0
 
     def manage_word_input(self, user_input):
         if user_input == self.current_words[0]:
             self.correct_chars += len(list(self.current_words[0]))
             self.correct_words += 1
+            self.words_seen += 1
             self.set_next_word()
         else:
+            self.incorrect_words += 1
             self.compute_incorrect_chars(user_input)
+            self.words_seen += 1
             self.set_next_word()
 
     def compute_incorrect_chars(self, user_input):
@@ -63,20 +66,26 @@ class WordManager:
         return difference
 
     def compute_statistics(self):
+        self.compute_wpm()
         self.compute_word_accuracy()
         self.compute_char_accuracy()
-        self.compute_wpm()
 
     def compute_wpm(self):
-        self.wpm = self.total_words - self.correct_words
+        self.wpm = self.correct_words
 
     def compute_word_accuracy(self):
         self.total_words = self.correct_words + self.incorrect_words
-        self.word_accuracy = self.correct_words / self.incorrect_words * 100
+        if self.incorrect_words != 0:
+            self.word_accuracy = round((self.correct_words / self.total_words) * 100, 2)
+        else:
+            self.word_accuracy = 100
 
     def compute_char_accuracy(self):
         self.total_chars = self.correct_chars + self.incorrect_chars
-        self.char_accuracy = self.correct_chars / self.incorrect_chars * 100
+        if self.incorrect_chars != 0:
+            self.char_accuracy = round((self.correct_chars / self.total_chars) * 100, 2)
+        else:
+            self.char_accuracy = 100
 
     def get_word_data(self):
         with open("most-common-words.txt", "r") as file:
@@ -85,8 +94,12 @@ class WordManager:
 
     def print_statistics(self):
         print(f"WPM: {self.wpm}")
-        print(f"Word Accuracy: {self.word_accuracy}")
-        print(f"Char Accuracy: {self.char_accuracy}")
+        print(
+            f"Word Accuracy: ( {self.correct_words} | {self.incorrect_words} ) -> {self.word_accuracy}%"
+        )
+        print(
+            f"Char Accuracy: ( {self.correct_chars} | {self.incorrect_chars} ) -> {self.char_accuracy}%"
+        )
 
     def print_current_words(self):
         print(*self.current_words)
@@ -109,15 +122,24 @@ class WordManager:
         sys.stdout.write(prefix)
         sys.stdout.flush()
         while True:
-            key = ord(getch.getch())
-            # If the key is enter or space
-            if key == 32 or key == 13:
+            key = ord(self.get_key())
+            if key == 32:
                 break
             concatenated_string = concatenated_string + chr(key)
             # Print the characters as they're entered
             sys.stdout.write(chr(key))
             sys.stdout.flush()
         return concatenated_string
+
+    def get_key(self):
+        if sys.platform == "win32":
+            import msvcrt
+
+            return msvcrt.getch()
+        else:
+            import getch
+
+            return getch.getch()
 
     def reset(self):
         self.words = self.get_word_data()
@@ -131,4 +153,5 @@ class WordManager:
         self.incorrect_words = 0
         self.word_accuracy = 0
         self.char_accuracy = 0
+        self.words_seen = 0
         self.wpm = 0
