@@ -31,6 +31,5 @@ def handle_post_run(manager):
     manager.compute_statistics()
     manager.print_statistics()
 
-
 if __name__ == "__main__":
     main()
